@@ -16,12 +16,7 @@ export default function CoverUpload({ trackId, currentCoverKey, onUploadComplete
 
   // Helper to resolve public URL for existing cover
   const coverUrl = currentCoverKey
-    ? `https://${process.env.NEXT_PUBLIC_APP_URL?.includes('localhost') 
-        ? 'localhost:3000' 
-        : process.env.NEXT_PUBLIC_APP_URL?.replace('https://', '')}/api/public-image/${encodeURIComponent(currentCoverKey)}` 
-    // Wait, we need a way to serve the image. Let's use a presigned GET url or just the R2 public URL if it's public. 
-    // Actually, earlier we built the app using signed GET URLs for tracks. For covers, let's use the same logic or just use a helper API route to fetch it.
-    // For now, let's just let the parent pass the resolved URL if needed, or we just show the placeholder.
+    ? `/api/images/${currentCoverKey}`
     : null;
 
   const handleFile = async (file: File) => {
@@ -118,17 +113,13 @@ export default function CoverUpload({ trackId, currentCoverKey, onUploadComplete
           <Loader2 className="w-8 h-8 mb-2 animate-spin" />
           <span className="text-sm">Uploading...</span>
         </div>
-      ) : currentCoverKey ? (
+      ) : coverUrl ? (
         <>
           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center z-10">
             <Upload className="w-6 h-6 text-white mb-1" />
             <span className="text-xs text-white font-medium">Change Cover</span>
           </div>
-          {/* We'd render the actual image here, but without a public URL we just show an icon for now or use the parent's resolved URL */}
-          <div className="flex flex-col items-center justify-center text-indigo-400">
-             <ImageIcon className="w-12 h-12 mb-2" />
-             <span className="text-xs font-medium">Cover Uploaded</span>
-          </div>
+          <img src={coverUrl} alt="Cover" className="w-full h-full object-cover" />
         </>
       ) : (
         <div className="flex flex-col items-center text-white/40 group-hover:text-white/70 transition-colors">

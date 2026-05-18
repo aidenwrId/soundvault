@@ -25,7 +25,11 @@ export default function AudioPlayer() {
           {/* Track Info */}
           <div className="flex items-center gap-3 min-w-0 w-64">
             <div className="w-11 h-11 rounded-lg bg-vault-800 flex items-center justify-center flex-shrink-0 overflow-hidden">
-              <Music className="w-5 h-5 text-vault-400" />
+              {track.cover_r2_key ? (
+                <img src={`/api/images/${track.cover_r2_key}`} alt={track.title} className="w-full h-full object-cover" />
+              ) : (
+                <Music className="w-5 h-5 text-vault-400" />
+              )}
             </div>
             <div className="min-w-0">
               <p className="text-sm font-medium text-vault-50 truncate">{track.title}</p>

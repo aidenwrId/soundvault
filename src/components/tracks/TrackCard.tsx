@@ -47,7 +47,11 @@ export default function TrackCard({ track, onShare, onPlay, onClick }: TrackCard
     >
       {/* Cover Art */}
       <div className="relative aspect-square rounded-xl bg-vault-800 mb-3 overflow-hidden flex items-center justify-center">
-        <Music className="w-10 h-10 text-vault-600" />
+        {track.cover_r2_key ? (
+          <img src={`/api/images/${track.cover_r2_key}`} alt={track.title} className="w-full h-full object-cover" />
+        ) : (
+          <Music className="w-10 h-10 text-vault-600" />
+        )}
         
         {/* Play overlay */}
         {track.status === 'ready' && (
