@@ -66,19 +66,24 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
           <style dangerouslySetInnerHTML={{ __html: profile.custom_css.replace(/<\/style>/gi, '') }} />
         )}
 
-        {profile.banner_url && (
-          <div className="w-full h-48 md:h-64 lg:h-80 relative overflow-hidden bg-vault-900 border-b border-vault-800/40 profile-banner-module">
+        {profile.banner_url ? (
+          <div className="w-full h-56 md:h-72 lg:h-96 relative overflow-hidden bg-vault-900 profile-banner-module border-b border-vault-800/50">
             <img src={`/api/images/${profile.banner_url}`} alt="Banner" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-vault-950 via-vault-950/20 to-transparent" />
+          </div>
+        ) : (
+          <div className="w-full h-32 md:h-48 relative overflow-hidden bg-vault-900 profile-banner-module border-b border-vault-800/50">
+            <div className="absolute inset-0 bg-gradient-to-tr from-vault-800 to-vault-900" />
             <div className="absolute inset-0 bg-gradient-to-t from-vault-950 to-transparent" />
           </div>
         )}
 
-        <div className="max-w-5xl mx-auto px-6 mt-[-40px] md:mt-[-60px] relative z-10 flex flex-col gap-6 profile-content-container">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 mt-[-60px] md:mt-[-80px] relative z-10 flex flex-col gap-8 profile-content-container">
           {parts.map((part, index) => {
             if (part === '{profile}') {
               return (
-                <div key={index} className="flex flex-col md:flex-row items-end md:items-center gap-6 profile-header-module">
-                  <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden bg-vault-800 border-4 border-vault-950 shadow-xl flex-shrink-0">
+                <div key={index} className="flex flex-col md:flex-row md:items-end gap-6 profile-header-module">
+                  <div className="w-32 h-32 md:w-44 md:h-44 rounded-full overflow-hidden bg-vault-900 border-4 border-vault-950 shadow-2xl flex-shrink-0 relative group">
                     {profile.avatar_url ? (
                       <img src={`/api/images/${profile.avatar_url}`} alt={profile.display_name || profile.username} className="w-full h-full object-cover" />
                     ) : (
@@ -86,10 +91,11 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
                         <User className="w-16 h-16 text-vault-400" />
                       </div>
                     )}
+                    <div className="absolute inset-0 rounded-full ring-1 ring-inset ring-white/10 pointer-events-none" />
                   </div>
-                  <div className="text-center md:text-left space-y-2 mt-4 md:mt-0 flex-1">
-                    <h1 className="text-3xl md:text-4xl font-bold text-vault-50 drop-shadow-md">{profile.display_name || profile.username}</h1>
-                    <p className="text-vault-400 font-medium">@{profile.username}</p>
+                  <div className="text-center md:text-left space-y-1 mt-4 md:mt-0 flex-1 md:pb-4">
+                    <h1 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight drop-shadow-md">{profile.display_name || profile.username}</h1>
+                    <p className="text-vault-300 font-medium text-lg">@{profile.username}</p>
                   </div>
                 </div>
               );
@@ -137,9 +143,9 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
 
             if (part === '{showcase-tracks}') {
               return (
-                <div key={index} className="mt-8 profile-tracks-module">
-                  <h2 className="text-xl font-bold text-vault-100 mb-6 flex items-center gap-2">
-                    <Music className="w-5 h-5 text-accent-blue" />
+                <div key={index} className="mt-4 profile-tracks-module">
+                  <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                    <Music className="w-6 h-6 text-accent-blue" />
                     Showcase
                   </h2>
 
