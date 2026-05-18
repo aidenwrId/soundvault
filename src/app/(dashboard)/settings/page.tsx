@@ -51,7 +51,18 @@ export default function SettingsPage() {
 #custom-profile-root .bg-accent-blue { background-color: var(--theme-accent) !important; }
 /* -------------------- */
 
-/* Add your custom CSS below: */
+/* You can customize specific elements!
+   .profile-header-module (The top section)
+   .profile-bio-module (The bio box)
+   .profile-socials-module (The socials container)
+   .profile-tracks-module (The showcase container)
+   .profile-track-card (Individual tracks)
+   .profile-track-cover (Track images)
+   .profile-track-title (Track titles)
+*/
+
+/* Example: Round the track cards! */
+/* .profile-track-card { border-radius: 20px; } */
 `;
         
         setCustomCss(data.profile.custom_css || defaultCss);
@@ -319,10 +330,10 @@ export default function SettingsPage() {
 
             <div>
               <h2 className="text-lg font-semibold text-vault-100 flex items-center gap-2 mb-2"><Code className="w-5 h-5 text-accent-green" />Custom CSS</h2>
-              <p className="text-xs text-vault-400 mb-3">Target elements using standard CSS. Your profile is wrapped in <code className="text-vault-300">#custom-profile-root</code>.</p>
+              <p className="text-xs text-vault-400 mb-3">Target elements using standard CSS. E.g. <code className="text-vault-300">.profile-track-card</code>, <code className="text-vault-300">.profile-bio-module</code>.</p>
               <textarea 
                 value={customCss} onChange={(e) => setCustomCss(e.target.value)} 
-                placeholder="/* Make your profile pop! */&#10;body { background: #000; }&#10;.track-card { border-radius: 0; }"
+                placeholder="/* Make your profile pop! */&#10;.profile-track-card { border-radius: 0; }"
                 className="w-full h-48 px-4 py-3 bg-vault-950 font-mono border border-vault-700/50 rounded-xl text-sm text-vault-200 focus:outline-none focus:border-accent-green/50"
               />
             </div>

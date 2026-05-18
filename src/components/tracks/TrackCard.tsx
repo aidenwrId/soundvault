@@ -63,16 +63,16 @@ export default function TrackCard({ track, onShare, onPlay, onClick }: TrackCard
     <div
       onClick={() => onClick?.(track)}
       className={cn(
-        'glass-card p-4 cursor-pointer group relative',
-        isCurrentTrack && 'border-accent-blue/30 bg-accent-blue/5'
+        'glass-card profile-track-card p-4 cursor-pointer group relative',
+        isCurrentTrack && 'border-accent-blue/30 bg-accent-blue/5 profile-track-card-active'
       )}
     >
       {/* Cover Art */}
-      <div className="relative aspect-square rounded-xl bg-vault-800 mb-3 overflow-hidden flex items-center justify-center">
+      <div className="relative aspect-square rounded-xl bg-vault-800 mb-3 overflow-hidden flex items-center justify-center profile-track-cover-container">
         {track.cover_r2_key ? (
-          <img src={`/api/images/${track.cover_r2_key}`} alt={track.title} className="w-full h-full object-cover" />
+          <img src={`/api/images/${track.cover_r2_key}`} alt={track.title} className="w-full h-full object-cover profile-track-cover" />
         ) : (
-          <Music className="w-10 h-10 text-vault-600" />
+          <Music className="w-10 h-10 text-vault-600 profile-track-cover-fallback" />
         )}
         
         {/* Play overlay */}
@@ -114,9 +114,9 @@ export default function TrackCard({ track, onShare, onPlay, onClick }: TrackCard
       </div>
 
       {/* Info */}
-      <div className="space-y-1">
-        <h3 className="text-sm font-semibold text-vault-50 truncate">{track.title}</h3>
-        <p className="text-xs text-vault-400 truncate">{track.artist || 'Unknown Artist'}</p>
+      <div className="space-y-1 profile-track-info">
+        <h3 className="text-sm font-semibold text-vault-50 truncate profile-track-title">{track.title}</h3>
+        <p className="text-xs text-vault-400 truncate profile-track-artist">{track.artist || 'Unknown Artist'}</p>
       </div>
 
       {/* Footer */}
