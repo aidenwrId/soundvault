@@ -40,6 +40,11 @@ export async function PATCH(request: NextRequest) {
     if (body.username !== undefined) updates.username = body.username;
     if (body.displayName !== undefined) updates.display_name = body.displayName;
     if (body.avatarUrl !== undefined) updates.avatar_url = body.avatarUrl;
+    if (body.bannerUrl !== undefined) updates.banner_url = body.bannerUrl;
+    if (body.bio !== undefined) updates.bio = body.bio;
+    if (body.socials !== undefined) updates.socials = body.socials;
+    if (body.customCss !== undefined) updates.custom_css = body.customCss;
+    if (body.customLayout !== undefined) updates.custom_layout = body.customLayout;
 
     const { data: profile, error } = await supabase
       .from('profiles')

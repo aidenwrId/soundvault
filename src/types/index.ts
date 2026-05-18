@@ -15,9 +15,15 @@ export interface Profile {
   username: string | null;
   display_name: string | null;
   avatar_url: string | null;
+  banner_url: string | null;
+  bio: string | null;
+  socials: { platform: string; url: string }[] | null;
+  custom_css: string | null;
+  custom_layout: string | null;
   storage_used_bytes: number;
   storage_limit_bytes: number;
   created_at: string;
+  updated_at?: string;
 }
 
 export interface Project {
