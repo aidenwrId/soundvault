@@ -37,8 +37,25 @@ export default function SettingsPage() {
         setBannerUrl(data.profile.banner_url || '');
         setBio(data.profile.bio || '');
         setSocials(data.profile.socials || []);
-        setCustomCss(data.profile.custom_css || '');
-        setCustomLayout(data.profile.custom_layout || '{profile}\n{showcase-tracks}');
+        const defaultLayout = '{profile}\n{bio}\n{socials}\n{showcase-tracks}';
+        const defaultCss = `/* --- THEME COLORS --- */
+#custom-profile-root {
+  --theme-bg: #09090b;
+  --theme-accent: #3b82f6;
+  --theme-text: #ffffff;
+}
+
+#custom-profile-root { background-color: var(--theme-bg) !important; color: var(--theme-text) !important; }
+#custom-profile-root h1, #custom-profile-root h2, #custom-profile-root p { color: var(--theme-text) !important; }
+#custom-profile-root .text-accent-blue { color: var(--theme-accent) !important; }
+#custom-profile-root .bg-accent-blue { background-color: var(--theme-accent) !important; }
+/* -------------------- */
+
+/* Add your custom CSS below: */
+`;
+        
+        setCustomCss(data.profile.custom_css || defaultCss);
+        setCustomLayout(data.profile.custom_layout || defaultLayout);
       }
       setLoading(false);
     })();
@@ -227,6 +244,70 @@ export default function SettingsPage() {
             </div>
 
             <div>
+              <h2 className="text-lg font-semibold text-vault-100 flex items-center gap-2 mb-4">Visual Theme Builder</h2>
+              <p className="text-xs text-vault-400 mb-4">Change your profile colors without coding. These will auto-update your Custom CSS below!</p>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs font-medium text-vault-300">Background Color</label>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="color" 
+                      value={(customCss.match(/--theme-bg:\s*([^;\n]+)/i)?.[1] || '#09090b').trim().slice(0, 7)}
+                      onChange={(e) => {
+                        const regex = /(--theme-bg:\s*)([^;\n]+)(;)/i;
+                        if (regex.test(customCss)) {
+                          setCustomCss(customCss.replace(regex, `$1${e.target.value}$3`));
+                        } else {
+                          setCustomCss(`#custom-profile-root { --theme-bg: ${e.target.value}; }\n` + customCss);
+                        }
+                      }}
+                      className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0"
+                    />
+                    <span className="text-xs font-mono text-vault-400">{(customCss.match(/--theme-bg:\s*([^;\n]+)/i)?.[1] || '#09090b').trim()}</span>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs font-medium text-vault-300">Accent Color</label>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="color" 
+                      value={(customCss.match(/--theme-accent:\s*([^;\n]+)/i)?.[1] || '#3b82f6').trim().slice(0, 7)}
+                      onChange={(e) => {
+                        const regex = /(--theme-accent:\s*)([^;\n]+)(;)/i;
+                        if (regex.test(customCss)) {
+                          setCustomCss(customCss.replace(regex, `$1${e.target.value}$3`));
+                        } else {
+                          setCustomCss(`#custom-profile-root { --theme-accent: ${e.target.value}; }\n` + customCss);
+                        }
+                      }}
+                      className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0"
+                    />
+                    <span className="text-xs font-mono text-vault-400">{(customCss.match(/--theme-accent:\s*([^;\n]+)/i)?.[1] || '#3b82f6').trim()}</span>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs font-medium text-vault-300">Text Color</label>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="color" 
+                      value={(customCss.match(/--theme-text:\s*([^;\n]+)/i)?.[1] || '#ffffff').trim().slice(0, 7)}
+                      onChange={(e) => {
+                        const regex = /(--theme-text:\s*)([^;\n]+)(;)/i;
+                        if (regex.test(customCss)) {
+                          setCustomCss(customCss.replace(regex, `$1${e.target.value}$3`));
+                        } else {
+                          setCustomCss(`#custom-profile-root { --theme-text: ${e.target.value}; }\n` + customCss);
+                        }
+                      }}
+                      className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 p-0"
+                    />
+                    <span className="text-xs font-mono text-vault-400">{(customCss.match(/--theme-text:\s*([^;\n]+)/i)?.[1] || '#ffffff').trim()}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-vault-800/50 pt-8">
               <h2 className="text-lg font-semibold text-vault-100 flex items-center gap-2 mb-2"><Layout className="w-5 h-5 text-accent-purple" />Custom Layout</h2>
               <p className="text-xs text-vault-400 mb-3">Available tags: {'{profile}'}, {'{showcase-tracks}'}, {'{socials}'}, {'{bio}'}. Write basic HTML or just stack the tags.</p>
               <textarea 
