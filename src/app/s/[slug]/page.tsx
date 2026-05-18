@@ -39,6 +39,11 @@ export default function PublicSharePage() {
   const playTrack = async (trackId: string) => {
     if (!audioRef.current) return;
     try {
+      const track = tracks.find((t: any) => t.id === trackId);
+      if (track && track.duration_seconds) {
+        setDuration(track.duration_seconds);
+      }
+      
       const res = await fetch(`/api/tracks/${trackId}/play-url`, { headers: { 'x-share-token': slug } });
       if (!res.ok) return;
       const { url } = await res.json();
@@ -47,6 +52,22 @@ export default function PublicSharePage() {
       await audioRef.current.play();
       setPlaying(true);
       setActiveTrackId(trackId);
+    } catch { /* */ }
+  };
+
+  const downloadTrack = async (e: React.MouseEvent, trackId: string) => {
+    e.stopPropagation();
+    try {
+      const res = await fetch(`/api/tracks/${trackId}/play-url`, { headers: { 'x-share-token': slug } });
+      if (!res.ok) return;
+      const { url } = await res.json();
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = ''; // Browser will use Content-Disposition if available
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     } catch { /* */ }
   };
 
@@ -60,7 +81,12 @@ export default function PublicSharePage() {
     const audio = audioRef.current;
     if (!audio) return;
     const onTime = () => setCurrentTime(audio.currentTime);
-    const onMeta = () => setDuration(audio.duration);
+    const onMeta = () => {
+      // Use audio.duration if valid, otherwise keep the state's duration (which we'll set from track.duration_seconds)
+      if (audio.duration && audio.duration !== Infinity && !isNaN(audio.duration)) {
+        setDuration(audio.duration);
+      }
+    };
     const onEnd = () => setPlaying(false);
     audio.addEventListener('timeupdate', onTime);
     audio.addEventListener('loadedmetadata', onMeta);
@@ -93,8 +119,14 @@ export default function PublicSharePage() {
       <div className="max-w-2xl mx-auto px-6 py-8 space-y-8">
         {/* Title */}
         <div className="text-center space-y-3">
-          <div className="w-24 h-24 rounded-2xl bg-vault-800 flex items-center justify-center mx-auto"><Music2 className="w-10 h-10 text-vault-500" /></div>
-          <h1 className="text-2xl font-bold text-vault-50">{isSingleTrack ? resource?.title : resource?.title}</h1>
+          {resource?.cover_r2_key ? (
+            <div className="w-24 h-24 rounded-2xl bg-vault-800 mx-auto overflow-hidden">
+              <img src={`/api/images/${resource.cover_r2_key}`} alt="Cover" className="w-full h-full object-cover" />
+            </div>
+          ) : (
+            <div className="w-24 h-24 rounded-2xl bg-vault-800 flex items-center justify-center mx-auto"><Music2 className="w-10 h-10 text-vault-500" /></div>
+          )}
+          <h1 className="text-2xl font-bold text-vault-50">{resource?.title}</h1>
           {shareLink.show_artist && resource?.artist && <p className="text-vault-300">{resource.artist}</p>}
           {!isSingleTrack && resource?.description && <p className="text-sm text-vault-400">{resource.description}</p>}
         </div>
@@ -112,13 +144,23 @@ export default function PublicSharePage() {
                   <p className={cn('text-sm font-medium truncate', isActive ? 'text-accent-blue-light' : 'text-vault-100')}>{track.title}</p>
                   {shareLink.show_artist && track.artist && <p className="text-xs text-vault-400">{track.artist}</p>}
                 </div>
-                <span className="text-xs text-vault-500 tabular-nums">{formatDuration(track.duration_seconds)}</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-vault-500 tabular-nums">{formatDuration(track.duration_seconds)}</span>
+                  {shareLink.allow_download && (
+                    <button 
+                      onClick={(e) => downloadTrack(e, track.id)}
+                      className="p-1.5 rounded-lg bg-vault-800 text-vault-300 hover:text-white hover:bg-vault-700 transition-colors"
+                      title="Download"
+                    >
+                      <Download className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
               </div>
             );
           })}
         </div>
 
-        {/* Active track waveform + controls */}
         {activeTrackId && (
           <div className="glass-card p-6 space-y-4">
             <WaveformDisplay progress={progress} height={60} />
