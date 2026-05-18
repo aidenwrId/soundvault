@@ -6,6 +6,7 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ key: string[] }> }
 ) {
+  let signedUrl: string;
   try {
     const { key } = await params;
     const r2Key = key.join('/');
@@ -14,10 +15,11 @@ export async function GET(
       return new NextResponse('Not Found', { status: 404 });
     }
 
-    const signedUrl = await getSignedPlaybackUrl(r2Key, 86400); // 24 hours
-    redirect(signedUrl);
+    signedUrl = await getSignedPlaybackUrl(r2Key, 86400); // 24 hours
   } catch (error) {
     console.error('Image fetch error:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
+  
+  redirect(signedUrl);
 }

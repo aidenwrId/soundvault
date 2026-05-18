@@ -32,12 +32,11 @@ export async function GET(
     if (shareToken) {
       const serviceSupabase = await createServiceClient();
       
-      // Find a share link that covers this track
+      // Find a share link by slug
       const { data: shareLink } = await serviceSupabase
         .from('share_links')
         .select('*')
-        .eq('resource_type', 'track')
-        .eq('resource_id', id)
+        .eq('slug', shareToken)
         .eq('is_active', true)
         .single();
 
@@ -49,11 +48,19 @@ export async function GET(
 
         const { data: track } = await serviceSupabase
           .from('tracks')
-          .select('audio_r2_key, status')
+          .select('audio_r2_key, status, project_id')
           .eq('id', id)
           .single();
 
-        if (track?.audio_r2_key && track.status === 'ready') {
+        // Verify the track matches the share link
+        let isValid = false;
+        if (shareLink.resource_type === 'track' && shareLink.resource_id === id) {
+          isValid = true;
+        } else if (shareLink.resource_type === 'project' && track && shareLink.resource_id === track.project_id) {
+          isValid = true;
+        }
+
+        if (isValid && track?.audio_r2_key && track.status === 'ready') {
           const url = await getSignedPlaybackUrl(track.audio_r2_key);
           return NextResponse.json({ url });
         }
