@@ -82,7 +82,6 @@ export default function PublicSharePage() {
     if (!audio) return;
     const onTime = () => setCurrentTime(audio.currentTime);
     const onMeta = () => {
-      // Use audio.duration if valid, otherwise keep the state's duration (which we'll set from track.duration_seconds)
       if (audio.duration && audio.duration !== Infinity && !isNaN(audio.duration)) {
         setDuration(audio.duration);
       }
@@ -91,8 +90,12 @@ export default function PublicSharePage() {
     audio.addEventListener('timeupdate', onTime);
     audio.addEventListener('loadedmetadata', onMeta);
     audio.addEventListener('ended', onEnd);
-    return () => { audio.removeEventListener('timeupdate', onTime); audio.removeEventListener('loadedmetadata', onMeta); audio.removeEventListener('ended', onEnd); };
-  }, []);
+    return () => { 
+      audio.removeEventListener('timeupdate', onTime); 
+      audio.removeEventListener('loadedmetadata', onMeta); 
+      audio.removeEventListener('ended', onEnd); 
+    };
+  }, [loading, data, verified]);
 
   if (loading) return <div className="min-h-screen bg-vault-950 flex items-center justify-center"><Loader2 className="w-8 h-8 text-accent-blue animate-spin" /></div>;
   if (error) return (
@@ -142,7 +145,14 @@ export default function PublicSharePage() {
                 </button>
                 <div className="flex-1 min-w-0">
                   <p className={cn('text-sm font-medium truncate', isActive ? 'text-accent-blue-light' : 'text-vault-100')}>{track.title}</p>
-                  {shareLink.show_artist && track.artist && <p className="text-xs text-vault-400">{track.artist}</p>}
+                  <div className="flex items-center gap-2 mt-0.5">
+                    {shareLink.show_artist && track.artist && <p className="text-xs text-vault-400 truncate">{track.artist}</p>}
+                    {track.mime_type && (
+                      <span className="px-1.5 py-0.5 rounded bg-vault-800 text-[10px] text-vault-500 uppercase font-medium tracking-wider">
+                        {track.mime_type.split('/').pop() || 'AUDIO'}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-vault-500 tabular-nums">{formatDuration(track.duration_seconds)}</span>

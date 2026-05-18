@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
-import { User, Save, Loader2 } from 'lucide-react';
+import { User, Save, Loader2, ExternalLink } from 'lucide-react';
 import StorageUsageBar from '@/components/ui/StorageUsageBar';
 import type { Profile } from '@/types';
 
@@ -76,7 +76,20 @@ export default function SettingsPage() {
       <div className="max-w-2xl mx-auto p-6 space-y-8">
         {/* Profile */}
         <div className="glass-card p-6 space-y-6">
-          <h2 className="text-lg font-semibold text-vault-100 flex items-center gap-2"><User className="w-5 h-5 text-accent-blue" />Profile</h2>
+          <h2 className="text-lg font-semibold text-vault-100 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <User className="w-5 h-5 text-accent-blue" />Profile
+            </div>
+            {profile?.username && (
+              <a 
+                href={`/${profile.username}`} 
+                target="_blank" 
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-vault-800 hover:bg-vault-700 text-xs text-vault-300 hover:text-vault-100 transition-colors"
+              >
+                View Public Profile <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            )}
+          </h2>
           <div className="flex items-center gap-4">
             <div 
               onClick={() => fileInputRef.current?.click()}
