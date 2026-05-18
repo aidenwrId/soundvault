@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Play, Pause, Share2, Download, Trash2, Music, Clock, ArrowLeft, Loader2 } from 'lucide-react';
+import { Play, Pause, Share2, Download, Trash2, Music, Clock, ArrowLeft, Loader2, Star } from 'lucide-react';
 import { useAudioPlayer } from '@/components/player/AudioPlayerProvider';
 import WaveformDisplay from '@/components/tracks/WaveformDisplay';
 import CoverUpload from '@/components/upload/CoverUpload';
@@ -46,6 +46,22 @@ export default function TrackPage() {
     setDeleting(false);
   };
 
+  const handleToggleShowcase = async () => {
+    if (!track) return;
+    const newStatus = !track.is_showcased;
+    setTrack({ ...track, is_showcased: newStatus });
+    try {
+      await fetch(`/api/tracks/${track.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isShowcased: newStatus }),
+      });
+    } catch {
+      // Revert on fail
+      setTrack({ ...track, is_showcased: !newStatus });
+    }
+  };
+
   if (loading) return <div className="flex items-center justify-center h-96"><Loader2 className="w-8 h-8 text-accent-blue animate-spin" /></div>;
   if (!track) return <div className="flex items-center justify-center h-96"><p className="text-vault-400">Track not found</p></div>;
 
@@ -74,6 +90,9 @@ export default function TrackPage() {
           <div className="flex items-center gap-3 pt-2 justify-center sm:justify-start">
             <button onClick={handlePlay} disabled={track.status !== 'ready'} className="flex items-center gap-2 px-6 py-2.5 bg-accent-blue hover:bg-accent-blue-light text-white text-sm font-medium rounded-xl transition-all disabled:opacity-50">
               {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}{isPlaying ? 'Pause' : 'Play'}
+            </button>
+            <button onClick={handleToggleShowcase} className={cn("p-2.5 rounded-xl border transition-all", track.is_showcased ? "bg-accent-amber/10 border-accent-amber text-accent-amber" : "border-vault-700 hover:bg-vault-800 text-vault-300 hover:text-vault-100")}>
+              <Star className="w-4 h-4" fill={track.is_showcased ? "currentColor" : "none"} />
             </button>
             <button onClick={() => setShowShare(true)} className="p-2.5 rounded-xl border border-vault-700 hover:bg-vault-800 text-vault-300 hover:text-vault-100 transition-all"><Share2 className="w-4 h-4" /></button>
             <button onClick={() => setShowDelete(true)} className="p-2.5 rounded-xl border border-vault-700 hover:bg-accent-red/10 hover:border-accent-red/30 text-vault-300 hover:text-accent-red transition-all"><Trash2 className="w-4 h-4" /></button>

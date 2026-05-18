@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Play, Pause, Share2, Music, Loader2 } from 'lucide-react';
+import { Play, Pause, Share2, Music, Loader2, Download } from 'lucide-react';
 import { useAudioPlayer } from '@/components/player/AudioPlayerProvider';
 import { formatDuration, formatDate, formatFileSize, cn } from '@/lib/utils';
 import type { Track } from '@/types';
@@ -33,10 +33,33 @@ export default function TrackList({ tracks, onShare, onClick }: TrackListProps) 
         const isPlaying = isCurrentTrack && state.isPlaying;
         const isLoading = isCurrentTrack && state.isLoading;
 
+        const isAudio = !track.mime_type || track.mime_type.startsWith('audio/');
+
         return (
           <div
             key={track.id}
-            onClick={() => onClick?.(track)}
+            onClick={() => {
+              if (!isAudio) {
+                // Open zip/video directly
+                (async () => {
+                  try {
+                    const res = await fetch(`/api/tracks/${track.id}/play-url`);
+                    if (res.ok) {
+                      const { url } = await res.json();
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.target = '_blank';
+                      a.download = '';
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                    }
+                  } catch {}
+                })();
+                return;
+              }
+              onClick?.(track);
+            }}
             className={cn(
               'grid grid-cols-[auto_1fr_1fr_100px_100px_80px] gap-4 px-4 py-3 items-center',
               'cursor-pointer group transition-colors rounded-lg',
@@ -50,6 +73,26 @@ export default function TrackList({ tracks, onShare, onClick }: TrackListProps) 
               onClick={(e) => {
                 e.stopPropagation();
                 if (track.status !== 'ready') return;
+                
+                if (!isAudio) {
+                  (async () => {
+                    try {
+                      const res = await fetch(`/api/tracks/${track.id}/play-url`);
+                      if (res.ok) {
+                        const { url } = await res.json();
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.target = '_blank';
+                        a.download = '';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                      }
+                    } catch {}
+                  })();
+                  return;
+                }
+
                 if (isCurrentTrack && isPlaying) actions.pause();
                 else if (isCurrentTrack) actions.resume();
                 else actions.playTrack(track);
@@ -58,6 +101,8 @@ export default function TrackList({ tracks, onShare, onClick }: TrackListProps) 
             >
               {isLoading ? (
                 <Loader2 className="w-4 h-4 text-accent-blue animate-spin" />
+              ) : !isAudio ? (
+                <Download className="w-4 h-4 text-vault-300 group-hover:text-accent-blue" />
               ) : isPlaying ? (
                 <Pause className="w-4 h-4 text-accent-blue" />
               ) : track.status === 'ready' ? (

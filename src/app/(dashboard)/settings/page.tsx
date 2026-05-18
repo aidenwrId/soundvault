@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { User, Save, Loader2 } from 'lucide-react';
 import StorageUsageBar from '@/components/ui/StorageUsageBar';
 import type { Profile } from '@/types';
@@ -11,21 +11,59 @@ export default function SettingsPage() {
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [message, setMessage] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     (async () => {
       const res = await fetch('/api/profile');
-      if (res.ok) { const data = await res.json(); setProfile(data.profile); setUsername(data.profile.username || ''); setDisplayName(data.profile.display_name || ''); }
+      if (res.ok) { 
+        const data = await res.json(); 
+        setProfile(data.profile); 
+        setUsername(data.profile.username || ''); 
+        setDisplayName(data.profile.display_name || ''); 
+        setAvatarUrl(data.profile.avatar_url || '');
+      }
       setLoading(false);
     })();
   }, []);
 
   const handleSave = async () => {
     setSaving(true); setMessage('');
-    const res = await fetch('/api/profile', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, displayName }) });
+    const res = await fetch('/api/profile', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, displayName, avatarUrl }) });
     if (res.ok) { const data = await res.json(); setProfile(data.profile); setMessage('Settings saved!'); }
     else { const data = await res.json(); setMessage(data.error || 'Failed to save'); }
     setSaving(false); setTimeout(() => setMessage(''), 3000);
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) return alert('Must be an image');
+
+    setUploadingAvatar(true);
+    try {
+      const signRes = await fetch('/api/uploads/sign', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'cover', fileName: file.name, contentType: file.type, fileSize: file.size })
+      });
+      if (!signRes.ok) throw new Error('Failed to sign upload');
+      const { uploadUrl, r2Key } = await signRes.json();
+
+      const uploadRes = await fetch(uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } });
+      if (!uploadRes.ok) throw new Error('Failed to upload image');
+      
+      setAvatarUrl(r2Key);
+      
+      // Auto-save avatar
+      await fetch('/api/profile', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ avatarUrl: r2Key }) });
+    } catch (err) {
+      console.error(err);
+      alert('Avatar upload failed');
+    } finally {
+      setUploadingAvatar(false);
+    }
   };
 
   if (loading) return <div className="flex items-center justify-center h-96"><Loader2 className="w-8 h-8 text-accent-blue animate-spin" /></div>;
@@ -40,7 +78,20 @@ export default function SettingsPage() {
         <div className="glass-card p-6 space-y-6">
           <h2 className="text-lg font-semibold text-vault-100 flex items-center gap-2"><User className="w-5 h-5 text-accent-blue" />Profile</h2>
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-vault-700 flex items-center justify-center"><User className="w-8 h-8 text-vault-400" /></div>
+            <div 
+              onClick={() => fileInputRef.current?.click()}
+              className="relative w-16 h-16 rounded-full bg-vault-700 flex items-center justify-center overflow-hidden cursor-pointer group"
+            >
+              {avatarUrl ? (
+                <img src={`/api/images/${avatarUrl}`} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <User className="w-8 h-8 text-vault-400" />
+              )}
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                {uploadingAvatar ? <Loader2 className="w-5 h-5 text-white animate-spin" /> : <span className="text-[10px] text-white font-medium">Change</span>}
+              </div>
+              <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarUpload} />
+            </div>
             <div><p className="text-sm text-vault-100 font-medium">{profile?.email}</p><p className="text-xs text-vault-400">Joined {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : ''}</p></div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

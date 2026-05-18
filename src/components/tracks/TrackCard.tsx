@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Play, Pause, Share2, MoreHorizontal, Music, Clock, Loader2 } from 'lucide-react';
+import { Play, Pause, Share2, MoreHorizontal, Music, Clock, Loader2, Download } from 'lucide-react';
 import { useAudioPlayer } from '@/components/player/AudioPlayerProvider';
 import { formatDuration, formatDate, cn } from '@/lib/utils';
 import type { Track } from '@/types';
@@ -19,10 +19,32 @@ export default function TrackCard({ track, onShare, onPlay, onClick }: TrackCard
   const isPlaying = isCurrentTrack && state.isPlaying;
   const isLoading = isCurrentTrack && state.isLoading;
 
+  const isAudio = !track.mime_type || track.mime_type.startsWith('audio/');
+
   const handlePlay = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (track.status !== 'ready') return;
     
+    if (!isAudio) {
+      // For zips and videos, open directly via play-url
+      (async () => {
+        try {
+          const res = await fetch(`/api/tracks/${track.id}/play-url`);
+          if (res.ok) {
+            const { url } = await res.json();
+            const a = document.createElement('a');
+            a.href = url;
+            a.target = '_blank';
+            a.download = '';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          }
+        } catch {}
+      })();
+      return;
+    }
+
     if (isCurrentTrack && state.isPlaying) {
       actions.pause();
     } else if (isCurrentTrack) {
@@ -65,6 +87,8 @@ export default function TrackCard({ track, onShare, onPlay, onClick }: TrackCard
             <div className="w-12 h-12 rounded-full bg-accent-blue flex items-center justify-center shadow-lg shadow-accent-blue/30">
               {isLoading ? (
                 <Loader2 className="w-5 h-5 text-white animate-spin" />
+              ) : !isAudio ? (
+                <Download className="w-5 h-5 text-white" />
               ) : isPlaying ? (
                 <Pause className="w-5 h-5 text-white" />
               ) : (

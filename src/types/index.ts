@@ -56,6 +56,7 @@ export interface Track {
   mime_type: string | null;
   size_bytes: number;
   status: TrackStatus;
+  is_showcased: boolean;
   created_at: string;
   updated_at: string;
   // Joined data

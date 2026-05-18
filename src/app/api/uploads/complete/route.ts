@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { trackId, r2Key, title, artist, durationSeconds } = body;
+    const { trackId, r2Key, coverR2Key, title, artist, durationSeconds } = body;
 
     if (!trackId || !r2Key) {
       return NextResponse.json({ error: 'Missing trackId or r2Key' }, { status: 400 });
@@ -28,13 +28,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Track not found' }, { status: 404 });
     }
 
-    // Update track status to ready
     const updates: Record<string, unknown> = {
       original_r2_key: r2Key,
       audio_r2_key: r2Key, // For MVP, original is also the playback file
       status: 'ready',
     };
 
+    if (coverR2Key) updates.cover_r2_key = coverR2Key;
     if (title) updates.title = title;
     if (artist) updates.artist = artist;
     if (durationSeconds) updates.duration_seconds = durationSeconds;
@@ -53,19 +53,22 @@ export async function POST(request: NextRequest) {
 
     // Update storage usage
     try {
-      const { data: allTracks } = await supabase
+      const { createServiceClient } = await import('@/lib/supabase/server');
+      const serviceSupabase = await createServiceClient();
+      
+      const { data: allTracks } = await serviceSupabase
         .from('tracks')
         .select('size_bytes')
         .eq('user_id', user.id);
       
       const totalStorage = allTracks?.reduce((acc, t) => acc + (t.size_bytes || 0), 0) || 0;
 
-      await supabase
+      await serviceSupabase
         .from('profiles')
         .update({ storage_used_bytes: totalStorage })
         .eq('id', user.id);
-    } catch {
-      // Storage update failed, non-critical
+    } catch (err) {
+      console.warn('Storage update failed', err);
     }
 
     return NextResponse.json({ track });

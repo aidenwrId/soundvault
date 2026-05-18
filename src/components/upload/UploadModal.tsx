@@ -19,6 +19,8 @@ interface UploadingFile {
   progress: number;
   status: 'pending' | 'uploading' | 'complete' | 'error';
   error?: string;
+  coverFile?: File;
+  coverPreview?: string;
 }
 
 export default function UploadModal({ isOpen, onClose, projects = [], onUploadComplete }: UploadModalProps) {
@@ -35,6 +37,14 @@ export default function UploadModal({ isOpen, onClose, projects = [], onUploadCo
     });
     setFiles((prev) => [...prev, ...validFiles]);
   }, []);
+
+  const handleCoverSelect = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) return;
+    const preview = URL.createObjectURL(file);
+    updateFile(index, { coverFile: file, coverPreview: preview });
+  };
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault(); setIsDragging(false);
@@ -53,6 +63,24 @@ export default function UploadModal({ isOpen, onClose, projects = [], onUploadCo
       if (!signRes.ok) throw new Error((await signRes.json()).error || 'Failed');
       const { uploadUrl, trackId, r2Key } = await signRes.json();
       setFiles((p) => p.map((f, i) => i === index ? { ...f, progress: 10 } : f));
+      let coverR2Key: string | undefined;
+
+      if (item.coverFile) {
+        try {
+          const cRes = await fetch('/api/uploads/sign', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: 'cover', fileName: item.coverFile.name, contentType: item.coverFile.type, fileSize: item.coverFile.size })
+          });
+          if (cRes.ok) {
+            const { uploadUrl: cUrl, r2Key: cKey } = await cRes.json();
+            await fetch(cUrl, { method: 'PUT', headers: { 'Content-Type': item.coverFile.type }, body: item.coverFile });
+            coverR2Key = cKey;
+          }
+        } catch (e) {
+          console.warn('Cover upload failed', e);
+        }
+      }
+
       const xhr = new XMLHttpRequest();
       await new Promise<void>((resolve, reject) => {
         xhr.upload.addEventListener('progress', (e) => { if (e.lengthComputable) { setFiles((p) => p.map((f, i) => i === index ? { ...f, progress: Math.round((e.loaded / e.total) * 80) + 10 } : f)); } });
@@ -62,7 +90,7 @@ export default function UploadModal({ isOpen, onClose, projects = [], onUploadCo
       });
       let dur: number | undefined;
       try { const u = URL.createObjectURL(item.file); const a = new Audio(u); dur = await new Promise<number>((r) => { a.addEventListener('loadedmetadata', () => { r(Math.round(a.duration)); URL.revokeObjectURL(u); }); a.addEventListener('error', () => { r(0); URL.revokeObjectURL(u); }); }); } catch {}
-      await fetch('/api/uploads/complete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ trackId, r2Key, title: item.title, artist: item.artist || undefined, durationSeconds: dur }) });
+      await fetch('/api/uploads/complete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ trackId, r2Key, coverR2Key, title: item.title, artist: item.artist || undefined, durationSeconds: dur }) });
       setFiles((p) => p.map((f, i) => i === index ? { ...f, progress: 100, status: 'complete' } : f));
       onUploadComplete?.();
     } catch (err) {
@@ -97,8 +125,22 @@ export default function UploadModal({ isOpen, onClose, projects = [], onUploadCo
           {files.map((item, index) => (
             <div key={index} className="bg-vault-800/50 border border-vault-700/40 rounded-xl p-4 space-y-3">
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-lg bg-vault-700 flex items-center justify-center flex-shrink-0">
-                  {item.status === 'complete' ? <CheckCircle2 className="w-5 h-5 text-accent-green" /> : item.status === 'error' ? <X className="w-5 h-5 text-accent-red" /> : <FileAudio className="w-5 h-5 text-vault-400" />}
+                <div className="relative w-14 h-14 rounded-lg bg-vault-700 flex items-center justify-center flex-shrink-0 group overflow-hidden border border-vault-600/30">
+                  {item.coverPreview ? (
+                    <img src={item.coverPreview} alt="Cover" className="w-full h-full object-cover" />
+                  ) : item.status === 'complete' ? (
+                    <CheckCircle2 className="w-6 h-6 text-accent-green" />
+                  ) : item.status === 'error' ? (
+                    <X className="w-6 h-6 text-accent-red" />
+                  ) : (
+                    <FileAudio className="w-6 h-6 text-vault-400" />
+                  )}
+                  {item.status === 'pending' && (
+                    <label className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-[10px] text-white text-center leading-tight">
+                      <span>Add<br/>Cover</span>
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleCoverSelect(index, e)} />
+                    </label>
+                  )}
                 </div>
                 <div className="flex-1 min-w-0 space-y-2">
                   <input type="text" value={item.title} onChange={(e) => updateFile(index, { title: e.target.value })} placeholder="Track title" disabled={item.status !== 'pending'} className="w-full bg-transparent text-sm text-vault-100 font-medium focus:outline-none disabled:opacity-60" />

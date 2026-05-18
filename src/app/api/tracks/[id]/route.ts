@@ -45,7 +45,7 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { title, artist, projectId, folderId, coverR2Key } = body;
+    const { title, artist, projectId, folderId, coverR2Key, isShowcased } = body;
 
     const updates: Record<string, unknown> = {};
     if (title !== undefined) updates.title = title;
@@ -53,6 +53,7 @@ export async function PATCH(
     if (projectId !== undefined) updates.project_id = projectId;
     if (folderId !== undefined) updates.folder_id = folderId;
     if (coverR2Key !== undefined) updates.cover_r2_key = coverR2Key;
+    if (isShowcased !== undefined) updates.is_showcased = isShowcased;
 
     const { data: track, error } = await supabase
       .from('tracks')
@@ -111,17 +112,24 @@ export async function DELETE(
     await supabase.from('tracks').delete().eq('id', id).eq('user_id', user.id);
 
     // Update storage
-    const { data: allTracks } = await supabase
-      .from('tracks')
-      .select('size_bytes')
-      .eq('user_id', user.id);
-    
-    const totalStorage = allTracks?.reduce((acc, t) => acc + (t.size_bytes || 0), 0) || 0;
+    try {
+      const { createServiceClient } = await import('@/lib/supabase/server');
+      const serviceSupabase = await createServiceClient();
+      
+      const { data: allTracks } = await serviceSupabase
+        .from('tracks')
+        .select('size_bytes')
+        .eq('user_id', user.id);
+      
+      const totalStorage = allTracks?.reduce((acc, t) => acc + (t.size_bytes || 0), 0) || 0;
 
-    await supabase
-      .from('profiles')
-      .update({ storage_used_bytes: totalStorage })
-      .eq('id', user.id);
+      await serviceSupabase
+        .from('profiles')
+        .update({ storage_used_bytes: totalStorage })
+        .eq('id', user.id);
+    } catch (err) {
+      console.warn('Storage update failed', err);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
