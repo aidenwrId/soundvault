@@ -6,6 +6,7 @@ import { User, Loader2, Music, Link as LinkIcon } from 'lucide-react';
 import TrackCard from '@/components/tracks/TrackCard';
 import { AudioPlayerProvider } from '@/components/player/AudioPlayerProvider';
 import AudioPlayer from '@/components/player/AudioPlayer';
+import DOMPurify from 'isomorphic-dompurify';
 import type { Track } from '@/types';
 
 interface PublicProfile {
@@ -167,7 +168,7 @@ export default function PublicProfilePage({ params }: { params: Promise<{ userna
 
             // Render raw text/spacing
             if (part.trim() === '') return null;
-            return <div key={index} className="text-vault-400 whitespace-pre-wrap font-mono text-xs opacity-50">{part}</div>;
+            return <div key={index} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(part) }} />;
           })}
         </div>
       </div>
