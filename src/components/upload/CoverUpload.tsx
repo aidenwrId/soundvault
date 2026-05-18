@@ -2,7 +2,6 @@
 
 import { useState, useRef } from 'react';
 import { Upload, ImageIcon, Loader2 } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
 
 interface CoverUploadProps {
   trackId: string;
@@ -14,7 +13,6 @@ export default function CoverUpload({ trackId, currentCoverKey, onUploadComplete
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { toast } = useToast();
 
   // Helper to resolve public URL for existing cover
   const coverUrl = currentCoverKey
@@ -28,11 +26,7 @@ export default function CoverUpload({ trackId, currentCoverKey, onUploadComplete
 
   const handleFile = async (file: File) => {
     if (!file.type.startsWith('image/')) {
-      toast({
-        title: 'Invalid file',
-        description: 'Please select an image file (JPEG, PNG)',
-        variant: 'destructive',
-      });
+      alert('Please select an image file (JPEG, PNG)');
       return;
     }
 
@@ -74,19 +68,10 @@ export default function CoverUpload({ trackId, currentCoverKey, onUploadComplete
 
       if (!updateRes.ok) throw new Error('Failed to update track');
 
-      toast({
-        title: 'Success',
-        description: 'Cover art updated successfully',
-      });
-      
       onUploadComplete(r2Key);
     } catch (error) {
       console.error(error);
-      toast({
-        title: 'Upload failed',
-        description: 'There was an error uploading your cover art',
-        variant: 'destructive',
-      });
+      alert('There was an error uploading your cover art');
     } finally {
       setIsUploading(false);
     }
