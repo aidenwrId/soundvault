@@ -27,11 +27,22 @@ export async function GET(
       }
     }
 
+    // Check if the track is showcased (publicly accessible)
+    const serviceSupabase = await createServiceClient();
+    const { data: publicTrack } = await serviceSupabase
+      .from('tracks')
+      .select('audio_r2_key, status, is_showcased')
+      .eq('id', id)
+      .single();
+
+    if (publicTrack?.is_showcased && publicTrack?.audio_r2_key && publicTrack.status === 'ready') {
+      const url = await getSignedPlaybackUrl(publicTrack.audio_r2_key);
+      return NextResponse.json({ url });
+    }
+
     // Check if there's a valid share link (for public access)
     const shareToken = request.headers.get('x-share-token');
     if (shareToken) {
-      const serviceSupabase = await createServiceClient();
-      
       // Find a share link by slug
       const { data: shareLink } = await serviceSupabase
         .from('share_links')
