@@ -4,7 +4,11 @@ import { Link2, Copy, Check, ExternalLink, ToggleLeft, ToggleRight, Trash2, Shar
 import EmptyState from '@/components/ui/EmptyState';
 import ConfirmDeleteModal from '@/components/ui/ConfirmDeleteModal';
 import { getAppUrl, copyToClipboard, formatDate, cn } from '@/lib/utils';
-import type { ShareLink } from '@/types';
+import type { ShareLink as BaseShareLink } from '@/types';
+
+interface ShareLink extends BaseShareLink {
+  resource_title?: string;
+}
 
 export default function SharedLinksPage() {
   const [links, setLinks] = useState<ShareLink[]>([]);
@@ -52,6 +56,7 @@ export default function SharedLinksPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium', link.resource_type === 'track' ? 'bg-accent-blue/20 text-accent-blue' : 'bg-accent-purple/20 text-accent-purple')}>{link.resource_type}</span>
+                    <span className="text-sm text-vault-50 font-medium truncate max-w-[200px]">{link.resource_title || 'Unknown'}</span>
                     {link.password_hash && <span className="text-xs px-2 py-0.5 rounded-full bg-accent-amber/20 text-accent-amber">Protected</span>}
                     {link.expires_at && <span className="text-xs text-vault-500">Expires {formatDate(link.expires_at)}</span>}
                   </div>

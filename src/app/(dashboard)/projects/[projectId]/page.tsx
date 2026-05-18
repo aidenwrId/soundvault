@@ -5,6 +5,7 @@ import { ArrowLeft, Upload, Share2, Loader2, Music, FolderOpen } from 'lucide-re
 import TrackCard from '@/components/tracks/TrackCard';
 import UploadModal from '@/components/upload/UploadModal';
 import ShareModal from '@/components/share/ShareModal';
+import AddExistingModal from '@/components/projects/AddExistingModal';
 import EmptyState from '@/components/ui/EmptyState';
 import type { Project, Track } from '@/types';
 
@@ -15,6 +16,7 @@ export default function ProjectDetailPage() {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [loading, setLoading] = useState(true);
   const [showUpload, setShowUpload] = useState(false);
+  const [showAddExisting, setShowAddExisting] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [shareTrack, setShareTrack] = useState<Track | null>(null);
 
@@ -41,6 +43,7 @@ export default function ProjectDetailPage() {
             </div>
             <div className="flex gap-2">
               <button onClick={() => setShowShare(true)} className="p-2 rounded-xl border border-vault-700 hover:bg-vault-800 text-vault-300"><Share2 className="w-4 h-4" /></button>
+              <button onClick={() => setShowAddExisting(true)} className="flex items-center gap-2 px-4 py-2 bg-vault-800 hover:bg-vault-700 text-vault-100 text-sm font-medium rounded-xl border border-vault-700/50">Add Existing</button>
               <button onClick={() => setShowUpload(true)} className="flex items-center gap-2 px-4 py-2 bg-accent-blue hover:bg-accent-blue-light text-white text-sm font-medium rounded-xl"><Upload className="w-4 h-4" />Upload</button>
             </div>
           </div>
@@ -56,6 +59,7 @@ export default function ProjectDetailPage() {
         )}
       </div>
       <UploadModal isOpen={showUpload} onClose={() => setShowUpload(false)} projects={[{ id: project.id, title: project.title }]} onUploadComplete={fetchProject} />
+      <AddExistingModal isOpen={showAddExisting} onClose={() => setShowAddExisting(false)} projectId={project.id} onAdded={fetchProject} />
       <ShareModal isOpen={showShare} onClose={() => setShowShare(false)} resource={project} resourceType="project" />
       {shareTrack && <ShareModal isOpen={!!shareTrack} onClose={() => setShareTrack(null)} resource={shareTrack} resourceType="track" />}
     </div>

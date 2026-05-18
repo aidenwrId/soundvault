@@ -179,7 +179,11 @@ export default function PublicSharePage() {
                 {playing ? <Pause className="w-4 h-4 text-white" /> : <Play className="w-4 h-4 text-white ml-0.5" />}
               </button>
               <div className="flex-1">
-                <input type="range" min={0} max={duration || 100} value={currentTime} onChange={(e) => { if (audioRef.current) audioRef.current.currentTime = parseFloat(e.target.value); }}
+                <input type="range" min={0} max={duration || 100} value={currentTime} onChange={(e) => { 
+                  const val = parseFloat(e.target.value);
+                  if (audioRef.current) audioRef.current.currentTime = val; 
+                  setCurrentTime(val);
+                }}
                   className="w-full h-1" style={{ background: `linear-gradient(to right, var(--color-accent-blue) ${progress * 100}%, var(--color-vault-700) ${progress * 100}%)` }} />
                 <div className="flex justify-between text-xs text-vault-500 mt-1"><span>{formatDuration(currentTime)}</span><span>{formatDuration(duration)}</span></div>
               </div>

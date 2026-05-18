@@ -21,7 +21,27 @@ export async function GET() {
       return NextResponse.json({ error: 'Failed to fetch share links' }, { status: 500 });
     }
 
-    return NextResponse.json({ shareLinks: links || [] });
+    const trackIds = links?.filter(l => l.resource_type === 'track').map(l => l.resource_id) || [];
+    const projectIds = links?.filter(l => l.resource_type === 'project').map(l => l.resource_id) || [];
+
+    const [{ data: tracks }, { data: projects }] = await Promise.all([
+      trackIds.length > 0 ? supabase.from('tracks').select('id, title').in('id', trackIds) : Promise.resolve({ data: [] }),
+      projectIds.length > 0 ? supabase.from('projects').select('id, title').in('id', projectIds) : Promise.resolve({ data: [] })
+    ]);
+
+    const trackMap = new Map((tracks || []).map(t => [t.id, t.title]));
+    const projectMap = new Map((projects || []).map(p => [p.id, p.title]));
+
+    const enrichedLinks = links?.map(link => ({
+      ...link,
+      resource_title: link.resource_type === 'track' 
+        ? trackMap.get(link.resource_id) 
+        : link.resource_type === 'project' 
+          ? projectMap.get(link.resource_id) 
+          : 'Unknown'
+    })) || [];
+
+    return NextResponse.json({ shareLinks: enrichedLinks });
   } catch (error) {
     console.error('Share links error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
